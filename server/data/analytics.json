@@ -1,0 +1,102 @@
+{
+  "totalSearches": 1255,
+  "totalNavigations": 892,
+  "popularProducts": [
+    {
+      "name": "Milk",
+      "searches": 156
+    },
+    {
+      "name": "Bread",
+      "searches": 134
+    },
+    {
+      "name": "Rice",
+      "searches": 129
+    },
+    {
+      "name": "Toothpaste",
+      "searches": 114
+    },
+    {
+      "name": "Soap",
+      "searches": 100
+    },
+    {
+      "name": "Coffee",
+      "searches": 95
+    },
+    {
+      "name": "Sugar",
+      "searches": 87
+    },
+    {
+      "name": "Biscuits",
+      "searches": 82
+    },
+    {
+      "name": "Shampoo",
+      "searches": 78
+    },
+    {
+      "name": "Vegetables",
+      "searches": 71
+    }
+  ],
+  "popularAisles": [
+    {
+      "aisle": "A1",
+      "visits": 234
+    },
+    {
+      "aisle": "B3",
+      "visits": 198
+    },
+    {
+      "aisle": "A3",
+      "visits": 176
+    },
+    {
+      "aisle": "C2",
+      "visits": 165
+    },
+    {
+      "aisle": "A5",
+      "visits": 143
+    }
+  ],
+  "navigationSessions": [
+    {
+      "date": "Mon",
+      "count": 45
+    },
+    {
+      "date": "Tue",
+      "count": 52
+    },
+    {
+      "date": "Wed",
+      "count": 49
+    },
+    {
+      "date": "Thu",
+      "count": 63
+    },
+    {
+      "date": "Fri",
+      "count": 78
+    },
+    {
+      "date": "Sat",
+      "count": 95
+    },
+    {
+      "date": "Sun",
+      "count": 88
+    }
+  ],
+  "avgRouteLength": 24.5,
+  "activeUsers": 47,
+  "completedPickups": 0,
+  "totalRouteDistance": 0
+}
