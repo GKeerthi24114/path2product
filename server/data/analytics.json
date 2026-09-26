@@ -1,10 +1,10 @@
 {
-  "totalSearches": 1255,
+  "totalSearches": 1261,
   "totalNavigations": 892,
   "popularProducts": [
     {
       "name": "Milk",
-      "searches": 156
+      "searches": 158
     },
     {
       "name": "Bread",
@@ -16,7 +16,7 @@
     },
     {
       "name": "Toothpaste",
-      "searches": 114
+      "searches": 115
     },
     {
       "name": "Soap",
@@ -24,7 +24,7 @@
     },
     {
       "name": "Coffee",
-      "searches": 95
+      "searches": 96
     },
     {
       "name": "Sugar",
@@ -36,11 +36,15 @@
     },
     {
       "name": "Shampoo",
-      "searches": 78
+      "searches": 79
     },
     {
       "name": "Vegetables",
       "searches": 71
+    },
+    {
+      "name": "Fruits",
+      "searches": 1
     }
   ],
   "popularAisles": [

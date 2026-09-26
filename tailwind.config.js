@@ -10,6 +10,14 @@ export default {
       fontFamily: {
         sans: ['Inter', 'sans-serif'],
       },
+      fontSize: {
+        'xxs': '0.625rem',
+      },
+      colors: {
+        gray: {
+          150: '#eaedf0',
+        },
+      },
     },
   },
   plugins: [],
