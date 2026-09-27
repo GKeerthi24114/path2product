@@ -58,4 +58,38 @@ router.get('/:id', (req, res) => {
   }
 });
 
+// PUT /api/products/:id - Update product location, stock, price, category
+router.put('/:id', (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    const updates = req.body;
+    const filePath = path.join(__dirname, '../data/products.json');
+    const products = getProducts();
+    
+    const index = products.findIndex(p => p.id === id);
+    if (index === -1) {
+      return res.status(404).json({ error: 'Product not found' });
+    }
+
+    const updatedProduct = {
+      ...products[index],
+      ...updates,
+      id // preserve ID
+    };
+
+    // Calculate inStock based on stock number
+    if (updatedProduct.stock !== undefined) {
+      updatedProduct.stock = Math.max(0, parseInt(updatedProduct.stock, 10) || 0);
+      updatedProduct.inStock = updatedProduct.stock > 0;
+    }
+
+    products[index] = updatedProduct;
+    fs.writeFileSync(filePath, JSON.stringify(products, null, 2), 'utf-8');
+
+    res.json({ success: true, product: updatedProduct });
+  } catch (error) {
+    res.status(500).json({ error: 'Error updating product' });
+  }
+});
+
 export default router;

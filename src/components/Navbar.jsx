@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Navigation, Menu, X, BarChart3, LayoutDashboard, Home } from 'lucide-react';
+import { Navigation, Menu, X, BarChart3, LayoutDashboard, Home, Store } from 'lucide-react';
 import DarkModeToggle from './DarkModeToggle';
 
 export default function Navbar() {
@@ -67,7 +67,7 @@ export default function Navbar() {
                   : 'text-gray-600 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400'
               }`}
             >
-              <BarChart3 className="h-4 w-4" /> Admin Analytics
+              <Store className="h-4 w-4" /> Shopkeeper Admin
             </Link>
             <div className="h-6 w-px bg-gray-200 dark:bg-slate-700" />
             <DarkModeToggle />
@@ -109,7 +109,7 @@ export default function Navbar() {
             onClick={() => setIsOpen(false)}
             className="flex items-center gap-2 px-3 py-2.5 rounded-xl font-medium text-base text-gray-700 dark:text-slate-200 hover:bg-gray-100 dark:hover:bg-slate-800"
           >
-            <BarChart3 className="h-5 w-5" /> Admin Analytics
+            <Store className="h-5 w-5" /> Shopkeeper Admin
           </Link>
         </div>
       )}

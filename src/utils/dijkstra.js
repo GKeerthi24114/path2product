@@ -88,9 +88,42 @@ export const generateDirections = (pathNodes, nodesMeta, adjacency = {}, product
       continue;
     }
 
+    if (fromNode.type === 'escalator' || fromNode.type === 'stairs' || fromNode.type === 'lift') {
+      directions.push({
+        instruction: `Continue to ${toNode.label} (${edgeWeight} m)`,
+        from: fromId,
+        to: toId,
+        distance: edgeWeight,
+        turnType: 'straight'
+      });
+      continue;
+    }
+
     if (toNode.type === 'escalator') {
       directions.push({
-        instruction: `Walk straight towards the Escalator (${edgeWeight} m)`,
+        instruction: `Continue to the escalator (${edgeWeight} m)`,
+        from: fromId,
+        to: toId,
+        distance: edgeWeight,
+        turnType: 'vertical'
+      });
+      continue;
+    }
+
+    if (toNode.type === 'stairs') {
+      directions.push({
+        instruction: `Continue to the stairs (${edgeWeight} m)`,
+        from: fromId,
+        to: toId,
+        distance: edgeWeight,
+        turnType: 'vertical'
+      });
+      continue;
+    }
+
+    if (toNode.type === 'lift') {
+      directions.push({
+        instruction: `Continue to the elevator / lift (${edgeWeight} m)`,
         from: fromId,
         to: toId,
         distance: edgeWeight,

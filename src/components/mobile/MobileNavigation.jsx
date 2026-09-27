@@ -342,56 +342,97 @@ export default function MobileNavigation() {
             {multiStopRoute.stops.map((stop, idx) => {
               const isCurrent = idx === currentStopIndex;
               const isDone = Boolean(stop.isCollected);
+              const prevStop = idx > 0 ? multiStopRoute.stops[idx - 1] : null;
+              const prevFloor = prevStop ? prevStop.floor : 'Floor 1';
+              const isFloorChange = prevFloor !== stop.floor;
+
+              const prevFloorNum = parseInt((prevFloor || '1').replace(/\D/g, '')) || 1;
+              const stopFloorNum = parseInt((stop.floor || '1').replace(/\D/g, '')) || 1;
+              const isGoingUp = stopFloorNum > prevFloorNum;
+              const transitionLabel = stopFloorNum === 3 ? 'Stairs / Escalator' : 'Escalator';
 
               return (
-                <div
-                  key={stop.stopNumber}
-                  onClick={() => toggleProductCollected(stop.product.id)}
-                  className={`flex items-center justify-between p-3 rounded-2xl border transition-all text-xs cursor-pointer select-none active:scale-[0.99] ${
-                    isCurrent
-                      ? 'bg-blue-50 dark:bg-blue-950/40 border-blue-500 font-bold shadow-xs ring-1 ring-blue-400'
-                      : isDone
-                      ? 'bg-slate-50 dark:bg-slate-900/40 border-gray-200 dark:border-slate-800 text-slate-400'
-                      : 'bg-white dark:bg-slate-800 border-gray-150 dark:border-slate-700 text-slate-700 dark:text-slate-300'
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5">
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleProductCollected(stop.product.id);
-                      }}
-                      className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-black transition-all shrink-0 active:scale-90 ${
-                        isDone 
-                          ? 'bg-emerald-500 text-white shadow-xs' 
-                          : isCurrent 
-                          ? 'border-2 border-blue-600 text-blue-600 bg-white dark:bg-slate-800 ring-2 ring-blue-300' 
-                          : 'border-2 border-slate-300 dark:border-slate-600 text-slate-400 hover:border-blue-400'
-                      }`}
-                      title={isDone ? 'Collected - Tap to unmark' : 'Tap to mark collected'}
-                    >
-                      {isDone ? '✓' : '○'}
-                    </button>
-                    <span className="text-xl">{stop.product.emoji}</span>
-                    <div>
-                      <div className={isDone ? 'line-through text-slate-400' : 'font-extrabold'}>
-                        STOP {stop.stopNumber}: {stop.product.name} × {stop.quantity || stop.product.quantity || 1}
+                <React.Fragment key={stop.stopNumber}>
+                  {/* Explicit Floor Transition between stops */}
+                  {isFloorChange && (
+                    <div className="flex items-center justify-between px-3.5 py-2 rounded-2xl bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-indigo-500/10 border border-indigo-500/30 text-indigo-700 dark:text-indigo-300 text-xs font-extrabold shadow-xs">
+                      <div className="flex items-center gap-2">
+                        <span className="w-5 h-5 rounded-lg bg-indigo-600 text-white text-[11px] font-black flex items-center justify-center">
+                          {isGoingUp ? '↑' : '↓'}
+                        </span>
+                        <span>
+                          Take {transitionLabel} {isGoingUp ? '↑ up to' : '↓ down to'} {stop.floor}
+                        </span>
                       </div>
-                      <div className="text-xxs text-slate-400">
-                        {stop.aisle} • {stop.floor}
+                      <span className="text-[10px] uppercase tracking-wider text-indigo-500 font-black">
+                        Floor {stopFloorNum}
+                      </span>
+                    </div>
+                  )}
+
+                  <div
+                    onClick={() => toggleProductCollected(stop.product.id)}
+                    className={`flex items-center justify-between p-3 rounded-2xl border transition-all text-xs cursor-pointer select-none active:scale-[0.99] ${
+                      isCurrent
+                        ? 'bg-blue-50 dark:bg-blue-950/40 border-blue-500 font-bold shadow-xs ring-1 ring-blue-400'
+                        : isDone
+                        ? 'bg-slate-50 dark:bg-slate-900/40 border-gray-200 dark:border-slate-800 text-slate-400'
+                        : 'bg-white dark:bg-slate-800 border-gray-150 dark:border-slate-700 text-slate-700 dark:text-slate-300'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleProductCollected(stop.product.id);
+                        }}
+                        className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-black transition-all shrink-0 active:scale-90 ${
+                          isDone 
+                            ? 'bg-emerald-500 text-white shadow-xs' 
+                            : isCurrent 
+                            ? 'border-2 border-blue-600 text-blue-600 bg-white dark:bg-slate-800 ring-2 ring-blue-300' 
+                            : 'border-2 border-slate-300 dark:border-slate-600 text-slate-400 hover:border-blue-400'
+                        }`}
+                        title={isDone ? 'Collected - Tap to unmark' : 'Tap to mark collected'}
+                      >
+                        {isDone ? '✓' : '○'}
+                      </button>
+                      <span className="text-xl">{stop.product.emoji}</span>
+                      <div>
+                        <div className={isDone ? 'line-through text-slate-400' : 'font-extrabold'}>
+                          STOP {stop.stopNumber}: {stop.product.name} × {stop.quantity || stop.product.quantity || 1}
+                        </div>
+                        <div className="text-xxs text-slate-400">
+                          {stop.aisle} • {stop.floor}
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  {isCurrent && (
-                    <span className="px-2 py-0.5 rounded-full bg-blue-600 text-white text-xxs font-extrabold">
-                      Active
-                    </span>
-                  )}
-                </div>
+                    {isCurrent && (
+                      <span className="px-2 py-0.5 rounded-full bg-blue-600 text-white text-xxs font-extrabold">
+                        Active
+                      </span>
+                    )}
+                  </div>
+                </React.Fragment>
               );
             })}
+
+            {/* Transition down to Floor 1 Checkout if last stop was on upper floor */}
+            {multiStopRoute.stops.length > 0 && (multiStopRoute.stops[multiStopRoute.stops.length - 1]?.floor !== 'Floor 1') && (
+              <div className="flex items-center justify-between px-3.5 py-2 rounded-2xl bg-gradient-to-r from-purple-500/10 via-indigo-500/10 to-emerald-500/10 border border-purple-500/30 text-purple-700 dark:text-purple-300 text-xs font-extrabold shadow-xs">
+                <div className="flex items-center gap-2">
+                  <span className="w-5 h-5 rounded-lg bg-purple-600 text-white text-[11px] font-black flex items-center justify-center">
+                    ↓
+                  </span>
+                  <span>Take Escalator / Elevator ↓ down to Floor 1 (Checkout Area)</span>
+                </div>
+                <span className="text-[10px] uppercase tracking-wider text-purple-500 font-black">
+                  Floor 1
+                </span>
+              </div>
+            )}
 
             {/* FINAL */}
             <div className="flex items-center gap-3 text-xs font-semibold p-2 rounded-xl bg-slate-50 dark:bg-slate-900">

@@ -1,13 +1,28 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { dijkstra, generateDirections, findOptimizedRoute, findMultiProductRoute } from '../utils/dijkstra';
 import { ADJACENCY_LIST, NODES, PRODUCTS } from '../utils/graphData';
-import { navigatePath, navigateOptimized, logSearch } from '../utils/api';
+import { navigatePath, navigateOptimized, logSearch, updateProductApi } from '../utils/api';
 
 const StoreContext = createContext();
 
 export function StoreProvider({ children }) {
+  // Single source of truth for products (managed by store owner / admin)
+  const [products, setProducts] = useState(() => {
+    try {
+      const saved = localStorage.getItem('store_products');
+      return saved ? JSON.parse(saved) : PRODUCTS;
+    } catch {
+      return PRODUCTS;
+    }
+  });
+
+  // Configurable route start node (defaults to Entrance 'ENT' for demo)
+  const [routeStartNode, setRouteStartNodeState] = useState(() => {
+    return localStorage.getItem('routeStartNode') || 'ENT';
+  });
+
   const [currentPosition, setCurrentPositionState] = useState(() => {
-    return localStorage.getItem('currentPosition') || null;
+    return localStorage.getItem('currentPosition') || 'ENT';
   });
   const [destination, setDestination] = useState(null);
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -57,7 +72,99 @@ export function StoreProvider({ children }) {
     localStorage.setItem('darkMode', darkMode.toString());
   }, [darkMode]);
 
+  // Fetch live products catalog from backend API on mount
+  useEffect(() => {
+    async function fetchProducts() {
+      try {
+        const res = await fetch('/api/products');
+        if (res.ok) {
+          const apiProducts = await res.json();
+          if (Array.isArray(apiProducts) && apiProducts.length > 0) {
+            setProducts(apiProducts);
+            localStorage.setItem('store_products', JSON.stringify(apiProducts));
+          }
+        }
+      } catch (e) {
+        // Fallback to local state
+      }
+    }
+    fetchProducts();
+  }, []);
+
   const toggleDarkMode = () => setDarkMode(!darkMode);
+
+  const updateRouteStartNode = (nodeId) => {
+    setRouteStartNodeState(nodeId);
+    localStorage.setItem('routeStartNode', nodeId);
+  };
+
+  // Admin function to update product placement, stock, price
+  const updateProduct = async (productId, updates) => {
+    const updatedList = products.map(p => {
+      if (p.id === productId) {
+        const updated = { ...p, ...updates };
+        if (updated.stock !== undefined) {
+          const numStock = Math.max(0, parseInt(updated.stock, 10) || 0);
+          updated.stock = numStock;
+          updated.inStock = numStock > 0;
+        }
+        return updated;
+      }
+      return p;
+    });
+
+    setProducts(updatedList);
+    localStorage.setItem('store_products', JSON.stringify(updatedList));
+
+    // Also update any matching item in shoppingList
+    setShoppingList(prev => prev.map(item => {
+      if (item.id === productId) {
+        const matchingUpdated = updatedList.find(p => p.id === productId);
+        return {
+          ...item,
+          ...updates,
+          stock: matchingUpdated?.stock,
+          inStock: matchingUpdated?.inStock,
+          floor: matchingUpdated?.floor || item.floor,
+          aisle: matchingUpdated?.aisle || item.aisle,
+          shelf: matchingUpdated?.shelf || item.shelf,
+          nodeId: matchingUpdated?.nodeId || item.nodeId,
+          price: matchingUpdated?.price || item.price
+        };
+      }
+      return item;
+    }));
+
+    // If multiStopRoute is active, update product info in stops
+    if (multiStopRoute && multiStopRoute.stops) {
+      setMultiStopRoute(prev => ({
+        ...prev,
+        stops: prev.stops.map(stop => {
+          if (stop.product.id === productId) {
+            const matchingUpdated = updatedList.find(p => p.id === productId);
+            return {
+              ...stop,
+              product: { ...stop.product, ...matchingUpdated },
+              floor: matchingUpdated?.floor || stop.floor,
+              aisle: matchingUpdated?.aisle || stop.aisle,
+              shelf: matchingUpdated?.shelf || stop.shelf,
+              nodeId: matchingUpdated?.nodeId || stop.nodeId
+            };
+          }
+          return stop;
+        })
+      }));
+    }
+
+    // Call backend API
+    try {
+      await updateProductApi(productId, updates);
+    } catch (err) {
+      console.warn("Backend product update error:", err);
+    }
+
+    addAssistantMessage(`Updated product #${productId} (${updates.name || 'details'})`, 'info');
+  };
 
   const addAssistantMessage = (text, type = 'info', extra = {}) => {
     setAssistantMessages(prev => [
@@ -101,6 +208,13 @@ export function StoreProvider({ children }) {
   // Single Product Navigation (Exact product -> exact map node)
   const navigateToProduct = async (product) => {
     if (!product || !product.nodeId) return;
+
+    // Check stock/availability
+    const liveProd = products.find(p => p.id === product.id) || product;
+    if (liveProd.stock <= 0 || liveProd.inStock === false) {
+      addAssistantMessage(`⚠ ${liveProd.name} is currently out of stock and unavailable for navigation.`, "warning");
+      return;
+    }
 
     if (!currentPosition) {
       setCurrentPosition('ENT');
@@ -192,13 +306,29 @@ export function StoreProvider({ children }) {
       return;
     }
 
-    const startNode = currentPosition || 'ENT';
+    // Filter available products (out-of-stock items cannot be navigated to)
+    const availableItems = shoppingList.filter(item => {
+      const live = products.find(p => p.id === item.id);
+      return live ? (live.stock > 0 && live.inStock) : (item.inStock !== false && (item.stock === undefined || item.stock > 0));
+    });
+
+    if (availableItems.length === 0) {
+      setRouteError("All items in your shopping list are currently out of stock.");
+      addAssistantMessage("All items in your shopping list are currently out of stock.", "warning");
+      return;
+    }
+
+    // Requirement 1 & 2: ALWAYS start optimized route from Entrance for the demo (configurable)
+    const startNode = routeStartNode || 'ENT';
+    setCurrentPosition(startNode);
+    setActiveFloor(1); // Entrance is always on Floor 1
+
     setIsCalculating(true);
     setRouteError(null);
     setActiveMobileTab('navigation');
 
     try {
-      const multiRoute = findMultiProductRoute(ADJACENCY_LIST, startNode, shoppingList, NODES);
+      const multiRoute = findMultiProductRoute(ADJACENCY_LIST, startNode, availableItems, NODES);
       setMultiStopRoute(multiRoute);
 
       // Find first uncollected stop in sequence
@@ -213,12 +343,10 @@ export function StoreProvider({ children }) {
         setPath(targetStop.pathSegment);
         setDirections(targetStop.directions);
         setActiveStepIndex(0);
-        if (targetStop.floor) {
-          const floorNum = parseInt(targetStop.floor.replace(/\D/g, '')) || 1;
-          setActiveFloor(floorNum);
-        }
+        // Start view on Floor 1 where Entrance is so customer visibly sees path from Entrance!
+        setActiveFloor(1);
 
-        addAssistantMessage(`✨ AI Optimized Shopping Route: Visiting ${multiRoute.stops.length} products with shortest walking distance (${multiRoute.totalDistance} m, ${multiRoute.estimatedTimeFormatted}). Starting with Stop ${targetStop.stopNumber}: ${targetStop.product.name} at ${targetStop.aisle}!`, "success");
+        addAssistantMessage(`✨ AI Optimized Shopping Route: Route begins at Entrance (${NODES[startNode]?.label || 'Entrance'}). Visiting ${multiRoute.stops.length} products with shortest walking distance (${multiRoute.totalDistance} m, ${multiRoute.estimatedTimeFormatted}). Stop 1: ${targetStop.product.name} at ${targetStop.aisle}!`, "success");
       } else if (multiRoute.stops.length > 0 && firstPendingIndex === -1) {
         // All items collected! Head to checkout
         setCurrentStopIndex(multiRoute.stops.length);
@@ -393,6 +521,13 @@ export function StoreProvider({ children }) {
 
   // Shopping list management
   const addToShoppingList = (product) => {
+    // Check live stock and availability
+    const live = products.find(p => p.id === product.id) || product;
+    if (live.stock <= 0 || live.inStock === false) {
+      addAssistantMessage(`⚠ ${live.name} is currently out of stock and cannot be added.`, "warning");
+      return;
+    }
+
     const existing = shoppingList.find(item => item.id === product.id);
     if (existing) {
       updateItemQuantity(product.id, 1);
@@ -401,6 +536,7 @@ export function StoreProvider({ children }) {
     }
     const itemWithQty = {
       ...product,
+      ...live,
       quantity: product.quantity || 1,
       collected: false
     };
@@ -430,6 +566,10 @@ export function StoreProvider({ children }) {
 
   return (
     <StoreContext.Provider value={{
+      products,
+      updateProduct,
+      routeStartNode,
+      updateRouteStartNode,
       currentPosition,
       setCurrentPosition,
       destination,

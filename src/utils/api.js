@@ -34,6 +34,21 @@ export async function getProductById(id) {
   }
 }
 
+export async function updateProductApi(id, updates) {
+  try {
+    const res = await fetch(`${API_BASE}/products/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updates)
+    });
+    if (!res.ok) throw new Error('Failed to update product');
+    return await res.json();
+  } catch (error) {
+    console.error('API Error:', error);
+    throw error;
+  }
+}
+
 export async function navigatePath(from, to) {
   try {
     const res = await fetch(`${API_BASE}/navigate`, {

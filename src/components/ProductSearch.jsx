@@ -6,11 +6,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 export default function ProductSearch() {
   const [query, setQuery] = useState('');
-  const { navigateToProduct, addToShoppingList } = useStore();
+  const { products, navigateToProduct, addToShoppingList } = useStore();
 
   const getFilteredProducts = () => {
     if (!query) return [];
-    return PRODUCTS.filter(p => 
+    const catalog = products && products.length > 0 ? products : [];
+    return catalog.filter(p => 
       p.name.toLowerCase().includes(query.toLowerCase()) ||
       p.category.toLowerCase().includes(query.toLowerCase()) ||
       p.aisle.toLowerCase().includes(query.toLowerCase())
@@ -31,7 +32,7 @@ export default function ProductSearch() {
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search soap, milk, rice..."
+          placeholder="Search soap, shampoo, rice, headphones..."
           className="w-full pl-10 pr-4 py-3 rounded-2xl bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/40 text-sm"
         />
         <Search className="absolute left-3.5 top-3.5 h-4.5 w-4.5 text-gray-400" />
@@ -44,45 +45,78 @@ export default function ProductSearch() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 10 }}
-            className="mt-3 max-h-64 overflow-y-auto space-y-2 border border-gray-150 dark:border-slate-700/55 rounded-2xl p-2 bg-slate-50/50 dark:bg-slate-900/30"
+            className="mt-3 max-h-72 overflow-y-auto space-y-2 border border-gray-150 dark:border-slate-700/55 rounded-2xl p-2 bg-slate-50/50 dark:bg-slate-900/30"
           >
             {filtered.length > 0 ? (
-              filtered.map((prod) => (
-                <div
-                  key={prod.id}
-                  className="flex items-center justify-between p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700/40 hover:border-blue-400 dark:hover:border-blue-500 transition-colors shadow-sm"
-                >
-                  <div className="flex items-center gap-2.5">
-                    <span className="text-2xl">{prod.emoji}</span>
-                    <div>
-                      <div className="text-sm font-bold text-gray-900 dark:text-white">{prod.name}</div>
-                      <div className="text-xxs text-gray-400 dark:text-slate-500 font-medium">
-                        {prod.category} • {prod.aisle} ({prod.shelf})
+              filtered.map((prod) => {
+                const isOutOfStock = prod.stock <= 0 || prod.inStock === false;
+
+                return (
+                  <div
+                    key={prod.id}
+                    className={`flex items-center justify-between p-2.5 rounded-xl bg-white dark:bg-slate-800 border transition-colors shadow-sm ${
+                      isOutOfStock
+                        ? 'border-amber-200 dark:border-amber-900/40 bg-amber-50/20 dark:bg-amber-950/10'
+                        : 'border-gray-100 dark:border-slate-700/40 hover:border-blue-400 dark:hover:border-blue-500'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <span className="text-2xl">{prod.emoji}</span>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className={`text-sm font-bold ${isOutOfStock ? 'text-slate-500 dark:text-slate-400' : 'text-gray-900 dark:text-white'}`}>
+                            {prod.name}
+                          </span>
+                          {isOutOfStock ? (
+                            <span className="px-1.5 py-0.5 rounded text-[10px] font-black bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/25">
+                              ⚠ NOT AVAILABLE
+                            </span>
+                          ) : (
+                            <span className="text-xs font-extrabold text-blue-600 dark:text-blue-400">
+                              ₹{prod.price}
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-xxs text-gray-400 dark:text-slate-500 font-medium">
+                          {isOutOfStock ? (
+                            <span className="text-amber-600 dark:text-amber-400 font-medium">
+                              {prod.name} is currently unavailable.
+                            </span>
+                          ) : (
+                            <span>{prod.floor} • {prod.aisle} ({prod.shelf})</span>
+                          )}
+                        </div>
                       </div>
                     </div>
+                    
+                    {/* Action Buttons: Only show if item is in stock */}
+                    {!isOutOfStock ? (
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          onClick={() => addToShoppingList(prod)}
+                          className="p-2 rounded-lg bg-gray-50 hover:bg-gray-100 dark:bg-slate-700 dark:hover:bg-slate-600 text-gray-500 dark:text-slate-300 transition-colors"
+                          title="Add to shopping list"
+                        >
+                          <Plus className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => {
+                            navigateToProduct(prod);
+                            setQuery('');
+                          }}
+                          className="flex items-center gap-1 px-2.5 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white text-xs font-bold transition-all shadow-sm shadow-blue-500/10"
+                        >
+                          <Compass className="h-3.5 w-3.5 rotate-45" /> Go
+                        </button>
+                      </div>
+                    ) : (
+                      <span className="text-xxs font-bold text-slate-400 px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
+                        Out of Stock
+                      </span>
+                    )}
                   </div>
-                  
-                  {/* Action Buttons */}
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      onClick={() => addToShoppingList(prod)}
-                      className="p-2 rounded-lg bg-gray-50 hover:bg-gray-100 dark:bg-slate-700 dark:hover:bg-slate-600 text-gray-500 dark:text-slate-300 transition-colors"
-                      title="Add to shopping list"
-                    >
-                      <Plus className="h-4 w-4" />
-                    </button>
-                    <button
-                      onClick={() => {
-                        navigateToProduct(prod);
-                        setQuery('');
-                      }}
-                      className="flex items-center gap-1 px-2.5 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white text-xs font-bold transition-all shadow-sm shadow-blue-500/10"
-                    >
-                      <Compass className="h-3.5 w-3.5 rotate-45" /> Go
-                    </button>
-                  </div>
-                </div>
-              ))
+                );
+              })
             ) : (
               <div className="text-center py-6 text-sm text-gray-400 font-medium">
                 No items found

@@ -69,8 +69,16 @@ export function searchNaturalProducts(query, catalog = PRODUCTS) {
 
   // If products were found in catalog, return them sorted by query order
   if (matched.length > 0) {
-    // Sort by position of their name in the user's query
-    return matched.sort((a, b) => {
+    const formatted = matched.map(prod => {
+      const isAvailable = prod.stock !== undefined ? (prod.stock > 0 && prod.inStock !== false) : prod.inStock !== false;
+      return {
+        ...prod,
+        inStock: isAvailable,
+        isUnavailable: !isAvailable
+      };
+    });
+
+    return formatted.sort((a, b) => {
       const posA = q.indexOf(a.name.toLowerCase());
       const posB = q.indexOf(b.name.toLowerCase());
       if (posA !== -1 && posB !== -1) return posA - posB;

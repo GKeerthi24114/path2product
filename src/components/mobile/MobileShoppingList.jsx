@@ -130,9 +130,23 @@ export default function MobileShoppingList() {
             {multiStopRoute.stops.map((stop, idx) => {
               const isCollected = Boolean(stop.isCollected);
               const isCurrent = idx === currentStopIndex;
+              const prevStop = idx > 0 ? multiStopRoute.stops[idx - 1] : null;
+              const prevFloor = prevStop ? prevStop.floor : 'Floor 1';
+              const isFloorChange = prevFloor !== stop.floor;
+              const stopFloorNum = parseInt((stop.floor || '1').replace(/\D/g, '')) || 1;
+              const prevFloorNum = parseInt((prevFloor || '1').replace(/\D/g, '')) || 1;
+              const isUp = stopFloorNum > prevFloorNum;
 
               return (
                 <React.Fragment key={stop.stopNumber}>
+                  {isFloorChange && (
+                    <>
+                      <span className="text-indigo-400 text-xs shrink-0">→</span>
+                      <span className="px-2 py-0.5 rounded-lg bg-indigo-500/25 border border-indigo-400/30 text-indigo-300 text-xxs font-extrabold shrink-0 flex items-center gap-1">
+                        ⚡ {stopFloorNum === 3 ? 'Stairs' : 'Escalator'} {isUp ? '↑' : '↓'} F{stopFloorNum}
+                      </span>
+                    </>
+                  )}
                   <span className="text-indigo-400 text-xs shrink-0">→</span>
                   <span
                     className={`px-2.5 py-1 rounded-xl shrink-0 flex items-center gap-1 transition-all ${

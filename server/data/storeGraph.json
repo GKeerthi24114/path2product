@@ -28,9 +28,14 @@
     "C5": { "id": "C5", "x": 580, "y": 240, "label": "Aisle C5", "type": "aisle", "floor": 2 },
 
     "ESC_F3": { "id": "ESC_F3", "x": 700, "y": 230, "label": "Escalator", "type": "escalator", "floor": 3 },
-    "D1": { "id": "D1", "x": 160, "y": 260, "label": "Aisle D1 (Tech)", "type": "aisle", "floor": 3 },
-    "D2": { "id": "D2", "x": 340, "y": 260, "label": "Aisle D2 (Apparel)", "type": "aisle", "floor": 3 },
-    "D3": { "id": "D3", "x": 520, "y": 260, "label": "Aisle D3 (Cafe)", "type": "aisle", "floor": 3 }
+    "STAIRS_F3": { "id": "STAIRS_F3", "x": 700, "y": 130, "label": "Stairs", "type": "stairs", "floor": 3 },
+    "LIFT_F3": { "id": "LIFT_F3", "x": 700, "y": 330, "label": "Lift", "type": "lift", "floor": 3 },
+    "D1": { "id": "D1", "x": 160, "y": 240, "label": "Aisle D1 (Tech)", "type": "aisle", "floor": 3 },
+    "D2": { "id": "D2", "x": 340, "y": 240, "label": "Aisle D2 (Apparel)", "type": "aisle", "floor": 3 },
+    "D3": { "id": "D3", "x": 520, "y": 240, "label": "Aisle D3 (Cafe)", "type": "aisle", "floor": 3 },
+    "E1": { "id": "E1", "x": 160, "y": 380, "label": "Aisle E1 (Audio)", "type": "aisle", "floor": 3 },
+    "E2": { "id": "E2", "x": 340, "y": 380, "label": "Aisle E2 (Electronics)", "type": "aisle", "floor": 3 },
+    "E3": { "id": "E3", "x": 520, "y": 380, "label": "Aisle E3 (Appliances)", "type": "aisle", "floor": 3 }
   },
   "edges": [
     { "from": "ENT", "to": "A1", "weight": 8 },
@@ -79,8 +84,20 @@
     { "from": "C4", "to": "C5", "weight": 3 },
 
     { "from": "ESC_F2", "to": "ESC_F3", "weight": 3 },
-    { "from": "ESC_F3", "to": "D3", "weight": 4 },
+    { "from": "STAIRS_F2", "to": "STAIRS_F3", "weight": 4 },
+    { "from": "LIFT_F2", "to": "LIFT_F3", "weight": 3 },
+
+    { "from": "ESC_F3", "to": "STAIRS_F3", "weight": 3 },
+    { "from": "ESC_F3", "to": "LIFT_F3", "weight": 3 },
+    { "from": "STAIRS_F3", "to": "D3", "weight": 4 },
+    { "from": "ESC_F3", "to": "E3", "weight": 4 },
+    { "from": "LIFT_F3", "to": "E3", "weight": 4 },
     { "from": "D1", "to": "D2", "weight": 3 },
-    { "from": "D2", "to": "D3", "weight": 3 }
+    { "from": "D2", "to": "D3", "weight": 3 },
+    { "from": "D1", "to": "E1", "weight": 4 },
+    { "from": "D2", "to": "E2", "weight": 4 },
+    { "from": "D3", "to": "E3", "weight": 4 },
+    { "from": "E1", "to": "E2", "weight": 3 },
+    { "from": "E2", "to": "E3", "weight": 3 }
   ]
 }

@@ -35,14 +35,17 @@ export default function MobileHome() {
     optimizeShoppingRoute,
     setActiveMobileTab,
     assistantMessages,
-    addAssistantMessage
+    addAssistantMessage,
+    products
   } = useStore();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [addedOfferId, setAddedOfferId] = useState(null);
 
+  const productCatalog = products && products.length > 0 ? products : PRODUCTS;
+
   const filteredProducts = searchQuery.trim()
-    ? PRODUCTS.filter(p =>
+    ? productCatalog.filter(p =>
         p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         p.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
         p.aisle.toLowerCase().includes(searchQuery.toLowerCase())
@@ -159,43 +162,71 @@ export default function MobileHome() {
                 className="absolute left-0 right-0 mt-2 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-slate-800 p-2 max-h-64 overflow-y-auto z-50 text-slate-900 dark:text-white"
               >
                 {filteredProducts.length > 0 ? (
-                  filteredProducts.map((p) => (
-                    <div
-                      key={p.id}
-                      className="flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/80 transition-colors"
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <span className="text-xl">{p.emoji}</span>
-                        <div>
-                          <div className="text-xs font-bold leading-snug">{p.name}</div>
-                          <div className="text-[10px] text-slate-400">
-                            {p.floor || 'Floor 1'} • {p.aisle} • {p.shelf} • ${p.price}
+                  filteredProducts.map((p) => {
+                    const isOutOfStock = p.stock <= 0 || p.inStock === false;
+
+                    return (
+                      <div
+                        key={p.id}
+                        className={`flex items-center justify-between p-2.5 rounded-xl transition-colors ${
+                          isOutOfStock
+                            ? 'bg-amber-50/40 dark:bg-amber-950/20 border border-amber-200/50 dark:border-amber-900/30'
+                            : 'hover:bg-slate-50 dark:hover:bg-slate-800/80'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <span className="text-xl">{p.emoji}</span>
+                          <div>
+                            <div className="flex items-center gap-1.5">
+                              <span className={`text-xs font-bold leading-snug ${isOutOfStock ? 'text-slate-500' : ''}`}>{p.name}</span>
+                              {isOutOfStock ? (
+                                <span className="px-1.5 py-0.2 rounded text-[9px] font-black bg-amber-500/15 text-amber-600 dark:text-amber-400">
+                                  ⚠ NOT AVAILABLE
+                                </span>
+                              ) : (
+                                <span className="text-[11px] font-extrabold text-blue-600 dark:text-blue-400">₹{p.price}</span>
+                              )}
+                            </div>
+                            <div className="text-[10px] text-slate-400">
+                              {isOutOfStock ? (
+                                <span className="text-amber-600 dark:text-amber-400">{p.name} is currently unavailable.</span>
+                              ) : (
+                                <span>{p.floor || 'Floor 1'} • {p.aisle} • {p.shelf}</span>
+                              )}
+                            </div>
                           </div>
                         </div>
+
+                        {!isOutOfStock ? (
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              onClick={() => {
+                                addToShoppingList(p);
+                                setSearchQuery('');
+                              }}
+                              className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold"
+                              title="Add to shopping list"
+                            >
+                              <Plus className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              onClick={() => {
+                                navigateToProduct(p);
+                                setSearchQuery('');
+                              }}
+                              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-bold shadow-sm"
+                            >
+                              <Navigation className="h-3 w-3 rotate-45" /> Go
+                            </button>
+                          </div>
+                        ) : (
+                          <span className="text-[10px] font-bold text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded">
+                            Out of stock
+                          </span>
+                        )}
                       </div>
-                      <div className="flex items-center gap-1.5">
-                        <button
-                          onClick={() => {
-                            addToShoppingList(p);
-                            setSearchQuery('');
-                          }}
-                          className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold"
-                          title="Add to shopping list"
-                        >
-                          <Plus className="h-3.5 w-3.5" />
-                        </button>
-                        <button
-                          onClick={() => {
-                            navigateToProduct(p);
-                            setSearchQuery('');
-                          }}
-                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-bold shadow-sm"
-                        >
-                          <Navigation className="h-3 w-3 rotate-45" /> Go
-                        </button>
-                      </div>
-                    </div>
-                  ))
+                    );
+                  })
                 ) : (
                   <div className="py-4 text-center text-xs text-slate-400 font-medium">
                     No products found matching "{searchQuery}"

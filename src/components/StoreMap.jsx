@@ -1,7 +1,7 @@
 import React from 'react';
 import { useStore } from '../context/StoreContext';
 import { NODES } from '../utils/graphData';
-import { MapPin, Map, Navigation, CheckCircle, ArrowUpRight, Layers } from 'lucide-react';
+import { MapPin, Map, Navigation, CheckCircle, ArrowUpRight, Layers, Sparkles } from 'lucide-react';
 
 export default function StoreMap() {
   const { 
@@ -9,34 +9,45 @@ export default function StoreMap() {
     destination, 
     selectedProduct, 
     path, 
+    multiStopRoute,
+    currentStopIndex,
     activeFloor, 
     setActiveFloor 
   } = useStore();
 
-  // Filter nodes for the currently selected floor
-  const currentFloorNodes = Object.keys(NODES)
-    .filter(key => NODES[key].floor === activeFloor)
-    .reduce((acc, key) => {
-      acc[key] = NODES[key];
-      return acc;
-    }, {});
+  // Extract continuous segments of nodes for the active floor (prevents cross-floor diagonal artifacts)
+  const getFloorPathSegments = (nodeList) => {
+    if (!nodeList || nodeList.length === 0) return [];
+    const segments = [];
+    let currentSegment = [];
+
+    for (const nodeId of nodeList) {
+      const node = NODES[nodeId];
+      if (node && node.floor === activeFloor) {
+        currentSegment.push(`${node.x},${node.y}`);
+      } else {
+        if (currentSegment.length > 1) {
+          segments.push(currentSegment.join(' '));
+        }
+        currentSegment = [];
+      }
+    }
+    if (currentSegment.length > 1) {
+      segments.push(currentSegment.join(' '));
+    }
+    return segments;
+  };
+
+  // 1. Full Multi-Stop Tour segments on active floor
+  const fullTourSegments = multiStopRoute?.fullPath ? getFloorPathSegments(multiStopRoute.fullPath) : [];
+
+  // 2. Active Stop segment on active floor
+  const activeStopSegments = path && path.length > 0 ? getFloorPathSegments(path) : [];
 
   // Determine if active route crosses to another floor
   const destinationFloor = destination && NODES[destination]?.floor ? NODES[destination].floor : 1;
   const currentPosFloor = currentPosition && NODES[currentPosition]?.floor ? NODES[currentPosition].floor : 1;
   const crossesFloors = destination && currentPosFloor !== destinationFloor;
-
-  // Path points on the currently displayed floor
-  const getPointsString = () => {
-    // If the path contains nodes on current floor, draw them
-    return path.map(nodeId => {
-      const node = NODES[nodeId];
-      if (node && node.floor === activeFloor) {
-        return `${node.x},${node.y}`;
-      }
-      return '';
-    }).filter(Boolean).join(' ');
-  };
 
   const getAisleColorClass = (nodeId) => {
     if (currentPosition === nodeId) {
@@ -57,26 +68,43 @@ export default function StoreMap() {
     return 'text-slate-700 dark:text-slate-300';
   };
 
+  // Find stop badge info for a node
+  const getStopBadge = (nodeId) => {
+    if (!multiStopRoute || !multiStopRoute.stops) return null;
+    const stop = multiStopRoute.stops.find(s => s.nodeId === nodeId);
+    if (!stop) return null;
+    return {
+      stopNumber: stop.stopNumber,
+      isCollected: Boolean(stop.isCollected),
+      isCurrent: multiStopRoute.stops[currentStopIndex]?.nodeId === nodeId
+    };
+  };
+
   return (
     <div className="bg-white dark:bg-slate-800 rounded-3xl p-4 sm:p-6 border border-gray-200/50 dark:border-slate-700/50 shadow-lg flex flex-col items-center w-full">
       
-      {/* Header Info & Compact Floor Selector */}
+      {/* Header Info & Floor Selector */}
       <div className="w-full flex flex-col sm:flex-row items-center justify-between border-b border-gray-150/50 dark:border-slate-700/50 pb-3 mb-3 gap-3">
         <div className="flex items-center gap-2">
           <div className="p-1.5 rounded-xl bg-blue-500/10 text-blue-500">
             <Map className="h-4 w-4" />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-gray-900 dark:text-white leading-tight">
-              Store Layout — Floor {activeFloor}
+            <h3 className="text-sm font-bold text-gray-900 dark:text-white leading-tight flex items-center gap-2">
+              <span>Store Layout — Floor {activeFloor}</span>
+              {multiStopRoute && (
+                <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
+                  Full Route Active
+                </span>
+              )}
             </h3>
             <span className="text-[10px] text-slate-400">
-              {activeFloor === 1 ? 'Groceries, Dairy & Checkout' : activeFloor === 2 ? 'Snacks, Beverages & Staples' : 'Tech, Apparel & Cafe'}
+              {activeFloor === 1 ? 'Entrance, Groceries, Dairy & Checkouts' : activeFloor === 2 ? 'Personal Care, Household & Beverages' : 'Electronics, Audio, Gadgets & Appliances'}
             </span>
           </div>
         </div>
 
-        {/* Compact Mobile Floor Selector */}
+        {/* Compact Floor Selector */}
         <div className="flex items-center bg-slate-100 dark:bg-slate-900/80 p-1 rounded-2xl border border-gray-200 dark:border-slate-700">
           {[1, 2, 3].map((floorNum) => (
             <button
@@ -100,7 +128,7 @@ export default function StoreMap() {
           <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400">
             <ArrowUpRight className="h-4 w-4 shrink-0" />
             <span>
-              Route crosses from Floor {currentPosFloor} to Floor {destinationFloor} via Escalator
+              Route connects Floor {currentPosFloor} → Floor {destinationFloor} via Escalator / Stairs
             </span>
           </div>
           <button
@@ -124,7 +152,7 @@ export default function StoreMap() {
           {/* ================= FLOOR 1 RENDERING ================= */}
           {activeFloor === 1 && (
             <>
-              {/* 1. Walkable Corridors Map Layout */}
+              {/* Walkable Corridors Map Layout */}
               <g opacity="0.3">
                 <line x1="400" y1="40" x2="340" y2="160" stroke="#94a3b8" strokeWidth="2" strokeDasharray="5,5" />
                 <line x1="400" y1="40" x2="460" y2="160" stroke="#94a3b8" strokeWidth="2" strokeDasharray="5,5" />
@@ -136,7 +164,7 @@ export default function StoreMap() {
                 <line x1="460" y1="160" x2="460" y2="300" stroke="#94a3b8" strokeWidth="2" strokeDasharray="5,5" />
                 <line x1="580" y1="160" x2="580" y2="300" stroke="#94a3b8" strokeWidth="2" strokeDasharray="5,5" />
                 
-                {/* Path to Escalator & Stairs */}
+                {/* Path to Connectors */}
                 <line x1="580" y1="300" x2="700" y2="230" stroke="#94a3b8" strokeWidth="2" strokeDasharray="5,5" />
                 <line x1="580" y1="160" x2="700" y2="130" stroke="#94a3b8" strokeWidth="2" strokeDasharray="5,5" />
                 <line x1="580" y1="300" x2="700" y2="330" stroke="#94a3b8" strokeWidth="2" strokeDasharray="5,5" />
@@ -148,17 +176,19 @@ export default function StoreMap() {
                 <line x1="460" y1="300" x2="520" y2="560" stroke="#94a3b8" strokeWidth="2" strokeDasharray="5,5" />
               </g>
 
-              {/* 2. Entrance Node */}
+              {/* Entrance Node (Explicit Starting Point) */}
               <g>
-                <circle cx="400" cy="40" r="14" fill="#10b981" />
-                <text x="400" y="44" fill="#ffffff" fontSize="10" fontWeight="bold" textAnchor="middle">IN</text>
-                <text x="400" y="20" fill="#64748b" fontSize="11" fontWeight="bold" textAnchor="middle">ENTRANCE</text>
+                <circle cx="400" cy="40" r="16" fill="#10b981" stroke="#ffffff" strokeWidth="2" />
+                <text x="400" y="44" fill="#ffffff" fontSize="10" fontWeight="black" textAnchor="middle">IN</text>
+                <text x="400" y="18" fill="#10b981" fontSize="11" fontWeight="extrabold" textAnchor="middle">ENTRANCE (START)</text>
               </g>
 
-              {/* 3. Floor 1 Aisles (A1-A5, B1-B5) */}
+              {/* Floor 1 Aisles (A1-A5, B1-B5) */}
               {['A1', 'A2', 'A3', 'A4', 'A5', 'B1', 'B2', 'B3', 'B4', 'B5'].map(key => {
                 const node = NODES[key];
                 if (!node) return null;
+                const badge = getStopBadge(node.id);
+
                 return (
                   <g key={node.id} className="transition-all duration-300">
                     <rect
@@ -181,35 +211,53 @@ export default function StoreMap() {
                     >
                       {node.id}
                     </text>
+
+                    {/* Multi-Stop Order Badge */}
+                    {badge && (
+                      <g transform={`translate(${node.x + 24}, ${node.y - 24})`}>
+                        <circle
+                          r="11"
+                          fill={badge.isCollected ? '#10b981' : badge.isCurrent ? '#2563eb' : '#6366f1'}
+                          stroke="#ffffff"
+                          strokeWidth="2"
+                        />
+                        <text
+                          y="4"
+                          textAnchor="middle"
+                          fill="#ffffff"
+                          fontSize="9"
+                          fontWeight="black"
+                        >
+                          {badge.isCollected ? '✓' : badge.stopNumber}
+                        </text>
+                      </g>
+                    )}
                   </g>
                 );
               })}
 
-              {/* 4. Vertical Connections on Floor 1 */}
-              {/* Escalator */}
+              {/* Vertical Connections on Floor 1 */}
               <g>
                 <rect x="655" y="195" width="90" height="70" rx="14" fill="#e0e7ff" stroke="#6366f1" strokeWidth="2" />
                 <text x="700" y="225" textAnchor="middle" fontSize="11" fontWeight="extrabold" fill="#4338ca">↑ Escalator</text>
                 <text x="700" y="245" textAnchor="middle" fontSize="9" fontWeight="bold" fill="#6366f1">To Floor 2</text>
               </g>
 
-              {/* Stairs */}
               <g>
                 <rect x="655" y="105" width="90" height="50" rx="10" fill="#f1f5f9" stroke="#94a3b8" strokeWidth="1.5" />
                 <text x="700" y="135" textAnchor="middle" fontSize="10" fontWeight="bold" fill="#475569">↑ Stairs</text>
               </g>
 
-              {/* Lift */}
               <g>
                 <rect x="655" y="305" width="90" height="50" rx="10" fill="#f1f5f9" stroke="#94a3b8" strokeWidth="1.5" />
                 <text x="700" y="335" textAnchor="middle" fontSize="10" fontWeight="bold" fill="#475569">↑ Lift / Elev</text>
               </g>
 
-              {/* 5. Billing Counters on Floor 1 */}
+              {/* Billing Counters on Floor 1 */}
               {['BILL1', 'BILL2', 'BILL3'].map(key => {
                 const node = NODES[key];
                 if (!node) return null;
-                const isTarget = destination === node.id;
+                const isTarget = destination === node.id || (multiStopRoute?.finalCheckout?.nodeId === node.id);
                 return (
                   <g key={node.id}>
                     <rect
@@ -230,6 +278,12 @@ export default function StoreMap() {
                     >
                       {node.label}
                     </text>
+                    {isTarget && (
+                      <g transform={`translate(${node.x + 25}, ${node.y - 15})`}>
+                        <circle r="9" fill="#10b981" stroke="#ffffff" strokeWidth="1.5" />
+                        <text y="3" textAnchor="middle" fill="#ffffff" fontSize="8" fontWeight="bold">F</text>
+                      </g>
+                    )}
                   </g>
                 );
               })}
@@ -244,12 +298,15 @@ export default function StoreMap() {
                 <line x1="100" y1="240" x2="580" y2="240" stroke="#94a3b8" strokeWidth="2" strokeDasharray="5,5" />
                 <line x1="580" y1="240" x2="700" y2="230" stroke="#94a3b8" strokeWidth="2" strokeDasharray="5,5" />
                 <line x1="580" y1="240" x2="700" y2="130" stroke="#94a3b8" strokeWidth="2" strokeDasharray="5,5" />
+                <line x1="580" y1="240" x2="700" y2="330" stroke="#94a3b8" strokeWidth="2" strokeDasharray="5,5" />
               </g>
 
               {/* Floor 2 Aisles (C1-C5) */}
               {['C1', 'C2', 'C3', 'C4', 'C5'].map(key => {
                 const node = NODES[key];
                 if (!node) return null;
+                const badge = getStopBadge(node.id);
+
                 return (
                   <g key={node.id} className="transition-all duration-300">
                     <rect
@@ -272,6 +329,26 @@ export default function StoreMap() {
                     >
                       {node.id}
                     </text>
+
+                    {badge && (
+                      <g transform={`translate(${node.x + 24}, ${node.y - 30})`}>
+                        <circle
+                          r="11"
+                          fill={badge.isCollected ? '#10b981' : badge.isCurrent ? '#2563eb' : '#6366f1'}
+                          stroke="#ffffff"
+                          strokeWidth="2"
+                        />
+                        <text
+                          y="4"
+                          textAnchor="middle"
+                          fill="#ffffff"
+                          fontSize="9"
+                          fontWeight="black"
+                        >
+                          {badge.isCollected ? '✓' : badge.stopNumber}
+                        </text>
+                      </g>
+                    )}
                   </g>
                 );
               })}
@@ -279,13 +356,19 @@ export default function StoreMap() {
               {/* Vertical Connections on Floor 2 */}
               <g>
                 <rect x="655" y="195" width="90" height="70" rx="14" fill="#e0e7ff" stroke="#6366f1" strokeWidth="2" />
-                <text x="700" y="225" textAnchor="middle" fontSize="11" fontWeight="extrabold" fill="#4338ca">↓ Escalator</text>
-                <text x="700" y="245" textAnchor="middle" fontSize="9" fontWeight="bold" fill="#6366f1">To Floor 1</text>
+                <text x="700" y="222" textAnchor="middle" fontSize="11" fontWeight="extrabold" fill="#4338ca">⇅ Escalator</text>
+                <text x="700" y="240" textAnchor="middle" fontSize="9" fontWeight="bold" fill="#6366f1">F1 ↔ F3</text>
               </g>
 
               <g>
                 <rect x="655" y="105" width="90" height="50" rx="10" fill="#f1f5f9" stroke="#94a3b8" strokeWidth="1.5" />
-                <text x="700" y="135" textAnchor="middle" fontSize="10" fontWeight="bold" fill="#475569">↓ Stairs</text>
+                <text x="700" y="132" textAnchor="middle" fontSize="10" fontWeight="bold" fill="#475569">⇅ Stairs</text>
+                <text x="700" y="145" textAnchor="middle" fontSize="8" fontWeight="bold" fill="#64748b">F1 ↔ F3</text>
+              </g>
+
+              <g>
+                <rect x="655" y="305" width="90" height="50" rx="10" fill="#f1f5f9" stroke="#94a3b8" strokeWidth="1.5" />
+                <text x="700" y="335" textAnchor="middle" fontSize="10" fontWeight="bold" fill="#475569">⇅ Lift</text>
               </g>
             </>
           )}
@@ -295,22 +378,30 @@ export default function StoreMap() {
             <>
               {/* Floor 3 Corridors */}
               <g opacity="0.3">
-                <line x1="160" y1="260" x2="520" y2="260" stroke="#94a3b8" strokeWidth="2" strokeDasharray="5,5" />
-                <line x1="520" y1="260" x2="700" y2="230" stroke="#94a3b8" strokeWidth="2" strokeDasharray="5,5" />
+                <line x1="160" y1="240" x2="520" y2="240" stroke="#94a3b8" strokeWidth="2" strokeDasharray="5,5" />
+                <line x1="160" y1="380" x2="520" y2="380" stroke="#94a3b8" strokeWidth="2" strokeDasharray="5,5" />
+                <line x1="160" y1="240" x2="160" y2="380" stroke="#94a3b8" strokeWidth="2" strokeDasharray="5,5" />
+                <line x1="340" y1="240" x2="340" y2="380" stroke="#94a3b8" strokeWidth="2" strokeDasharray="5,5" />
+                <line x1="520" y1="240" x2="520" y2="380" stroke="#94a3b8" strokeWidth="2" strokeDasharray="5,5" />
+                <line x1="520" y1="240" x2="700" y2="130" stroke="#94a3b8" strokeWidth="2" strokeDasharray="5,5" />
+                <line x1="520" y1="380" x2="700" y2="230" stroke="#94a3b8" strokeWidth="2" strokeDasharray="5,5" />
+                <line x1="520" y1="380" x2="700" y2="330" stroke="#94a3b8" strokeWidth="2" strokeDasharray="5,5" />
               </g>
 
-              {/* Floor 3 Departments */}
+              {/* Floor 3 Departments (D1, D2, D3) */}
               {['D1', 'D2', 'D3'].map(key => {
                 const node = NODES[key];
                 if (!node) return null;
+                const badge = getStopBadge(node.id);
+
                 return (
                   <g key={node.id} className="transition-all duration-300">
                     <rect
                       x={node.x - 45}
-                      y={node.y - 45}
+                      y={node.y - 35}
                       width="90"
-                      height="90"
-                      rx="16"
+                      height="70"
+                      rx="14"
                       className={getAisleColorClass(node.id)}
                     />
                     <text
@@ -323,22 +414,117 @@ export default function StoreMap() {
                     >
                       {node.label}
                     </text>
+
+                    {badge && (
+                      <g transform={`translate(${node.x + 30}, ${node.y - 25})`}>
+                        <circle
+                          r="11"
+                          fill={badge.isCollected ? '#10b981' : badge.isCurrent ? '#2563eb' : '#6366f1'}
+                          stroke="#ffffff"
+                          strokeWidth="2"
+                        />
+                        <text
+                          y="4"
+                          textAnchor="middle"
+                          fill="#ffffff"
+                          fontSize="9"
+                          fontWeight="black"
+                        >
+                          {badge.isCollected ? '✓' : badge.stopNumber}
+                        </text>
+                      </g>
+                    )}
                   </g>
                 );
               })}
 
+              {/* Floor 3 Aisles E1, E2, E3 (Electronics & Gadgets) */}
+              {['E1', 'E2', 'E3'].map(key => {
+                const node = NODES[key];
+                if (!node) return null;
+                const badge = getStopBadge(node.id);
+
+                return (
+                  <g key={node.id} className="transition-all duration-300">
+                    <rect
+                      x={node.x - 45}
+                      y={node.y - 35}
+                      width="90"
+                      height="70"
+                      rx="14"
+                      className={getAisleColorClass(node.id)}
+                    />
+                    <text
+                      x={node.x}
+                      y={node.y + 4}
+                      textAnchor="middle"
+                      fontSize="11"
+                      fontWeight="bold"
+                      className={getAisleTextColor(node.id)}
+                    >
+                      {node.label}
+                    </text>
+
+                    {badge && (
+                      <g transform={`translate(${node.x + 30}, ${node.y - 25})`}>
+                        <circle
+                          r="11"
+                          fill={badge.isCollected ? '#10b981' : badge.isCurrent ? '#2563eb' : '#6366f1'}
+                          stroke="#ffffff"
+                          strokeWidth="2"
+                        />
+                        <text
+                          y="4"
+                          textAnchor="middle"
+                          fill="#ffffff"
+                          fontSize="9"
+                          fontWeight="black"
+                        >
+                          {badge.isCollected ? '✓' : badge.stopNumber}
+                        </text>
+                      </g>
+                    )}
+                  </g>
+                );
+              })}
+
+              {/* Connectors on Floor 3 */}
               <g>
                 <rect x="655" y="195" width="90" height="70" rx="14" fill="#e0e7ff" stroke="#6366f1" strokeWidth="2" />
                 <text x="700" y="225" textAnchor="middle" fontSize="11" fontWeight="extrabold" fill="#4338ca">↓ Escalator</text>
                 <text x="700" y="245" textAnchor="middle" fontSize="9" fontWeight="bold" fill="#6366f1">To Floor 2</text>
               </g>
+
+              <g>
+                <rect x="655" y="105" width="90" height="50" rx="10" fill="#f1f5f9" stroke="#94a3b8" strokeWidth="1.5" />
+                <text x="700" y="135" textAnchor="middle" fontSize="10" fontWeight="bold" fill="#475569">↓ Stairs</text>
+              </g>
+
+              <g>
+                <rect x="655" y="305" width="90" height="50" rx="10" fill="#f1f5f9" stroke="#94a3b8" strokeWidth="1.5" />
+                <text x="700" y="335" textAnchor="middle" fontSize="10" fontWeight="bold" fill="#475569">↓ Lift</text>
+              </g>
             </>
           )}
 
-          {/* Animated route path line (only for segments on active floor) */}
-          {getPointsString().split(' ').length > 1 && (
+          {/* 1. Complete Tour Route Lines on active floor (Dashed Indigo) */}
+          {fullTourSegments.map((segmentPts, i) => (
             <polyline
-              points={getPointsString()}
+              key={`full-tour-${i}`}
+              points={segmentPts}
+              fill="none"
+              stroke="#6366f1"
+              strokeWidth="4"
+              strokeDasharray="6,6"
+              opacity="0.8"
+            />
+          ))}
+
+          {/* 2. Active Stop Route Line on active floor (Solid Glowing Blue) */}
+          {activeStopSegments.map((segmentPts, i) => (
+            <polyline
+              key={`active-stop-${i}`}
+              points={segmentPts}
               fill="none"
               stroke="#3b82f6"
               strokeWidth="5"
@@ -346,7 +532,7 @@ export default function StoreMap() {
               strokeLinejoin="round"
               className="route-line"
             />
-          )}
+          ))}
 
           {/* Current location pulsing marker dot (if on active floor) */}
           {currentPosition && NODES[currentPosition] && NODES[currentPosition].floor === activeFloor && (
@@ -370,7 +556,7 @@ export default function StoreMap() {
             </g>
           )}
 
-          {/* Red Pin Destination Indicator (if on active floor) */}
+          {/* Destination Pin Indicator (if on active floor) */}
           {destination && NODES[destination] && NODES[destination].floor === activeFloor && destination !== currentPosition && (
             <g className="animate-bounce">
               <path

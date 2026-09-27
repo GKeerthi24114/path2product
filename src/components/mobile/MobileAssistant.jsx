@@ -25,7 +25,8 @@ export default function MobileAssistant() {
     addToShoppingList,
     navigateToProduct, 
     navigateToCheckout,
-    setActiveMobileTab 
+    setActiveMobileTab,
+    products
   } = useStore();
 
   const [inputText, setInputText] = useState('');
@@ -54,7 +55,7 @@ export default function MobileAssistant() {
     setIsTyping(true);
 
     setTimeout(() => {
-      const results = searchNaturalProducts(text, PRODUCTS);
+      const results = searchNaturalProducts(text, products || PRODUCTS);
 
       if (results.length > 0) {
         let introText = "";

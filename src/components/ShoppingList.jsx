@@ -104,7 +104,7 @@ export default function ShoppingList() {
                           {item.name} × {item.quantity || 1}
                         </div>
                         <div className="text-xxs text-gray-400 dark:text-slate-500 font-medium">
-                          {item.aisle} • {item.shelf} • ₹{(item.price || 0) * (item.quantity || 1)}
+                          {item.floor || 'Floor 1'} • {item.aisle} ({item.shelf}) • ₹{(item.price || 0) * (item.quantity || 1)}
                         </div>
                       </div>
                     </div>
