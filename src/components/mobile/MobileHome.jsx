@@ -111,7 +111,7 @@ export default function MobileHome() {
                 <span className="text-[11px] font-bold text-blue-100">3 Floors</span>
               </div>
               <h1 className="text-xl font-extrabold tracking-tight text-white leading-tight mt-0.5">
-                SmartMart Super Store
+                Path2Product Supermarket
               </h1>
               <p className="text-xs text-blue-100/80">123 Market Street, Downtown</p>
             </div>

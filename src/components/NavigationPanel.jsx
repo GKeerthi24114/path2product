@@ -1,10 +1,10 @@
 import React from 'react';
 import { useStore } from '../context/StoreContext';
-import { Compass, CreditCard, ChevronRight, CornerDownRight } from 'lucide-react';
+import { Compass, CreditCard, ChevronRight, CornerDownRight, Check } from 'lucide-react';
 import { NODES } from '../utils/graphData';
 
 export default function NavigationPanel() {
-  const { directions, path, selectedProduct, navigateToCheckout, currentPosition } = useStore();
+  const { directions, path, selectedProduct, navigateToCheckout, currentPosition, destination, endNavigation } = useStore();
 
   const calculateTotalDistance = () => {
     if (directions.length === 0) return 0;
@@ -85,14 +85,33 @@ export default function NavigationPanel() {
         )}
       </div>
 
-      {/* Checkout Navigation Button */}
-      {currentPosition && currentPosition !== 'BILL1' && currentPosition !== 'BILL2' && currentPosition !== 'BILL3' && (
-        <button
-          onClick={navigateToCheckout}
-          className="w-full inline-flex items-center justify-center gap-2 mt-4 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-md shadow-emerald-600/10 transition-colors"
-        >
-          <CreditCard className="h-4.5 w-4.5" /> Navigate to Checkout
-        </button>
+      {/* Checkout / End Navigation Actions */}
+      {path.length > 0 && (
+        <div className="space-y-2 mt-4">
+          {destination && destination.startsWith('BILL') ? (
+            <button
+              onClick={() => endNavigation(true)}
+              className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-md shadow-emerald-600/15 transition-colors"
+            >
+              <Check className="h-4.5 w-4.5 stroke-[3]" /> Complete & End Navigation
+            </button>
+          ) : (
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={navigateToCheckout}
+                className="inline-flex items-center justify-center gap-1.5 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md transition-colors"
+              >
+                <CreditCard className="h-4 w-4" /> Go to Checkout
+              </button>
+              <button
+                onClick={() => endNavigation(false)}
+                className="inline-flex items-center justify-center gap-1.5 py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-bold text-xs transition-colors"
+              >
+                End Route
+              </button>
+            </div>
+          )}
+        </div>
       )}
     </div>
   );

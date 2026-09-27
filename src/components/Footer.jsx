@@ -14,7 +14,7 @@ export default function Footer() {
               <div className="p-2 rounded-lg bg-gradient-to-tr from-blue-500 to-indigo-600 text-white shadow-md shadow-blue-500/10">
                 <Navigation className="h-4 w-4 rotate-45" />
               </div>
-              <span className="font-extrabold text-lg text-white">SmartStore</span>
+              <span className="font-extrabold text-lg text-white">Path2Product</span>
             </div>
             <p className="text-sm leading-relaxed text-slate-400">
               Interactive indoor maps powered by Dijkstra pathfinding algorithms. Designed for frictionless retail search.
@@ -28,7 +28,7 @@ export default function Footer() {
               <li><Link to="/" className="hover:text-blue-400 transition-colors">Home</Link></li>
               <li><Link to="/store" className="hover:text-blue-400 transition-colors">Select Store</Link></li>
               <li><Link to="/dashboard" className="hover:text-blue-400 transition-colors">Navigator Map</Link></li>
-              <li><Link to="/admin" className="hover:text-blue-400 transition-colors">Admin Dashboard</Link></li>
+              <li><Link to="/admin" className="hover:text-blue-400 transition-colors">Shopkeeper Dashboard</Link></li>
             </ul>
           </div>
 
@@ -48,7 +48,7 @@ export default function Footer() {
             <h4 className="text-white font-bold mb-4">Contact Info</h4>
             <div className="flex items-center gap-2">
               <Mail className="h-4 w-4 text-blue-500" />
-              <span>support@smartstore.com</span>
+              <span>support@path2product.com</span>
             </div>
             <div className="flex items-center gap-2">
               <Phone className="h-4 w-4 text-indigo-500" />
@@ -65,7 +65,7 @@ export default function Footer() {
         {/* Bottom bar */}
         <div className="pt-8 border-t border-slate-900 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">
           <div>
-            &copy; {new Date().getFullYear()} SmartStore Navigator. All rights reserved.
+            &copy; {new Date().getFullYear()} Path2Product. All rights reserved.
           </div>
           <div className="flex items-center gap-4">
             <a 

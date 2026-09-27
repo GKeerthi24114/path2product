@@ -18,6 +18,7 @@ function App() {
             <Route path="/store" element={<StoreSelection />} />
             <Route path="/dashboard" element={<StoreDashboard />} />
             <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/owner" element={<AdminDashboard />} />
           </Routes>
         </main>
       </div>

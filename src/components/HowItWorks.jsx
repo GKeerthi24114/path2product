@@ -45,7 +45,7 @@ export default function HowItWorks() {
             Navigation Flow
           </h2>
           <p className="mt-2 text-3xl sm:text-4xl font-extrabold text-gray-900 dark:text-white">
-            How SmartStore Works
+            How Path2Product Works
           </p>
           <div className="mt-4 h-1 w-12 bg-blue-500 mx-auto rounded-full" />
         </div>

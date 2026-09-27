@@ -42,6 +42,7 @@ export default function MobileNavigation() {
     isCalculating,
     routeError,
     clearNavigation,
+    endNavigation,
     navigateToCheckout,
     navigateToProduct,
     shoppingList,
@@ -183,21 +184,31 @@ export default function MobileNavigation() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
-                <button
-                  onClick={() => setActiveMobileTab('list')}
-                  className="py-3.5 px-4 rounded-2xl bg-white/20 hover:bg-white/30 text-white font-extrabold text-xs flex items-center justify-center gap-1.5 backdrop-blur-md active:scale-98 transition-all"
-                >
-                  <Plus className="h-4 w-4" />
-                  <span>+ Add More Items</span>
-                </button>
+              <div className="space-y-2 pt-1">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  <button
+                    onClick={() => setActiveMobileTab('list')}
+                    className="py-3.5 px-4 rounded-2xl bg-white/20 hover:bg-white/30 text-white font-extrabold text-xs flex items-center justify-center gap-1.5 backdrop-blur-md active:scale-98 transition-all"
+                  >
+                    <Plus className="h-4 w-4" />
+                    <span>+ Add More Items</span>
+                  </button>
+
+                  <button
+                    onClick={navigateToCheckout}
+                    className="py-3.5 px-4 rounded-2xl bg-white text-emerald-800 hover:bg-emerald-50 font-extrabold text-xs flex items-center justify-center gap-1.5 shadow-lg active:scale-98 transition-all"
+                  >
+                    <CreditCard className="h-4 w-4" />
+                    <span>Navigate to Checkout</span>
+                  </button>
+                </div>
 
                 <button
-                  onClick={navigateToCheckout}
-                  className="py-3.5 px-4 rounded-2xl bg-white text-emerald-800 hover:bg-emerald-50 font-extrabold text-xs flex items-center justify-center gap-1.5 shadow-lg active:scale-98 transition-all"
+                  onClick={() => endNavigation(true)}
+                  className="w-full py-3 px-4 rounded-2xl bg-emerald-700/60 hover:bg-emerald-700 text-emerald-100 hover:text-white font-bold text-xs flex items-center justify-center gap-1.5 border border-emerald-400/30 transition-all"
                 >
-                  <CreditCard className="h-4 w-4" />
-                  <span>Navigate to Checkout</span>
+                  <Check className="h-4 w-4" />
+                  <span>End Navigation & Clear Cart</span>
                 </button>
               </div>
             </div>
@@ -636,12 +647,21 @@ export default function MobileNavigation() {
             </button>
           )}
 
-          <button
-            onClick={clearNavigation}
-            className="py-3.5 px-4 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-extrabold text-xs flex items-center justify-center gap-1.5 active:scale-95 transition-all"
-          >
-            <X className="h-4 w-4" /> End Navigation
-          </button>
+          {destination && destination.startsWith('BILL') ? (
+            <button
+              onClick={() => endNavigation(true)}
+              className="py-3.5 px-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs flex items-center justify-center gap-1.5 shadow-md shadow-emerald-500/20 active:scale-95 transition-all"
+            >
+              <Check className="h-4 w-4 stroke-[3]" /> Complete & End Navigation
+            </button>
+          ) : (
+            <button
+              onClick={() => endNavigation(false)}
+              className="py-3.5 px-4 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-extrabold text-xs flex items-center justify-center gap-1.5 active:scale-95 transition-all"
+            >
+              <X className="h-4 w-4" /> End Navigation
+            </button>
+          )}
         </div>
       )}
 

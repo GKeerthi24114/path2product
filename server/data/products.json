@@ -33,7 +33,7 @@
     "shelf": "Shelf 1",
     "floor": "Floor 1",
     "nodeId": "A1",
-    "price": 120,
+    "price": 145,
     "stock": 25,
     "inStock": true,
     "emoji": "🍚"
@@ -242,8 +242,8 @@
     "floor": "Floor 1",
     "nodeId": "B1",
     "price": 199,
-    "stock": 0,
-    "inStock": false,
+    "stock": 1,
+    "inStock": true,
     "emoji": "📦"
   },
   {
@@ -333,7 +333,7 @@
     "floor": "Floor 2",
     "nodeId": "C5",
     "price": 130,
-    "stock": 12,
+    "stock": 11,
     "inStock": true,
     "emoji": "🧴"
   },

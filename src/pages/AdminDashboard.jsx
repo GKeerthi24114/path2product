@@ -41,6 +41,10 @@ export default function AdminDashboard() {
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState('ALL');
   const [selectedStockFilter, setSelectedStockFilter] = useState('ALL');
 
+  // Inline Price Editing State
+  const [editingPriceId, setEditingPriceId] = useState(null);
+  const [inlinePriceValue, setInlinePriceValue] = useState('');
+
   // Edit Product Modal State
   const [editingProduct, setEditingProduct] = useState(null);
   const [editForm, setEditForm] = useState({
@@ -182,6 +186,20 @@ export default function AdminDashboard() {
     await updateProduct(productId, { stock: newStock });
   };
 
+  // Inline Price Editing Handlers
+  const handleStartEditPrice = (prod) => {
+    setEditingPriceId(prod.id);
+    setInlinePriceValue(String(prod.price || ''));
+  };
+
+  const handleSaveInlinePrice = async (productId) => {
+    const val = Number(inlinePriceValue);
+    if (!isNaN(val) && val >= 0) {
+      await updateProduct(productId, { price: val });
+    }
+    setEditingPriceId(null);
+  };
+
   // Nodes for node dropdown based on chosen floor
   const getNodeOptionsForFloor = (floorStr) => {
     const floorNum = parseInt(floorStr.replace(/\D/g, '')) || 1;
@@ -197,13 +215,13 @@ export default function AdminDashboard() {
           <div className="space-y-2">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 backdrop-blur-md text-xs font-bold text-blue-200 border border-white/20">
               <Store className="h-3.5 w-3.5" />
-              <span>Supermarket Owner / Shopkeeper Portal</span>
+              <span>Path2Product</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-black tracking-tight leading-tight">
-              Store Product & Location Management
+              Shopkeeper Dashboard
             </h1>
             <p className="text-sm text-blue-100/90 max-w-2xl font-medium">
-              Control where items are placed across Floor 1, Floor 2, and Floor 3. Update stock quantities and availability in real-time. Customer navigation automatically uses these exact locations.
+              Manage product placement across Floor 1, Floor 2, and Floor 3. Adjust stock quantities and update prices in real-time. Customer search and navigation instantly reflect these exact supermarket locations.
             </p>
           </div>
 
@@ -307,11 +325,21 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-gray-200/80 dark:border-slate-700/60 shadow-sm flex items-center justify-between">
+            <div 
+              onClick={() => setSelectedStockFilter(selectedStockFilter === 'OUT_OF_STOCK' ? 'ALL' : 'OUT_OF_STOCK')}
+              className={`p-4 rounded-2xl border transition-all cursor-pointer shadow-sm flex items-center justify-between select-none ${
+                selectedStockFilter === 'OUT_OF_STOCK'
+                  ? 'bg-amber-50 dark:bg-amber-950/40 border-amber-500 ring-2 ring-amber-400'
+                  : 'bg-white dark:bg-slate-800 border-gray-200/80 dark:border-slate-700/60 hover:border-amber-400'
+              }`}
+              title="Click to toggle out of stock filter"
+            >
               <div>
                 <span className="text-xxs font-bold uppercase text-slate-400">Stock Alerts</span>
                 <div className="text-xl font-black text-amber-600 dark:text-amber-400 mt-0.5">{outOfStockCount}</div>
-                <span className="text-[11px] text-slate-400 font-semibold">Needs restock</span>
+                <span className="text-[11px] text-slate-400 font-semibold">
+                  {selectedStockFilter === 'OUT_OF_STOCK' ? 'Filtering: Out of Stock' : 'Click to filter out of stock'}
+                </span>
               </div>
               <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-600">
                 <AlertTriangle className="h-5 w-5" />
@@ -359,16 +387,54 @@ export default function AdminDashboard() {
                 ))}
               </select>
 
-              {/* Stock Filter */}
+              {/* Stock Filter (Requirement 7 & 8: Dynamic Actual Out of Stock Count) */}
               <select
                 value={selectedStockFilter}
                 onChange={(e) => setSelectedStockFilter(e.target.value)}
                 className="px-3 py-2 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 focus:outline-none"
               >
-                <option value="ALL">All Availability</option>
-                <option value="IN_STOCK">✓ Available / In Stock</option>
-                <option value="OUT_OF_STOCK">⚠ Out of Stock (0)</option>
+                <option value="ALL">All Availability ({totalCount})</option>
+                <option value="IN_STOCK">✓ Available ({inStockCount})</option>
+                <option value="OUT_OF_STOCK">⚠ Out of Stock ({outOfStockCount})</option>
               </select>
+            </div>
+
+            {/* Quick Filter Clickable Pills */}
+            <div className="flex items-center gap-2 pt-2 border-t border-gray-150 dark:border-slate-700/60 flex-wrap">
+              <span className="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider">Quick Filter:</span>
+              <button
+                type="button"
+                onClick={() => setSelectedStockFilter('ALL')}
+                className={`px-3 py-1 rounded-xl text-xs font-bold transition-all ${
+                  selectedStockFilter === 'ALL'
+                    ? 'bg-blue-600 text-white shadow-xs'
+                    : 'bg-slate-100 dark:bg-slate-700/60 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                }`}
+              >
+                All Products ({totalCount})
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedStockFilter('IN_STOCK')}
+                className={`px-3 py-1 rounded-xl text-xs font-bold transition-all ${
+                  selectedStockFilter === 'IN_STOCK'
+                    ? 'bg-emerald-600 text-white shadow-xs'
+                    : 'bg-slate-100 dark:bg-slate-700/60 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                }`}
+              >
+                ✓ Available ({inStockCount})
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedStockFilter(selectedStockFilter === 'OUT_OF_STOCK' ? 'ALL' : 'OUT_OF_STOCK')}
+                className={`px-3 py-1 rounded-xl text-xs font-bold transition-all ${
+                  selectedStockFilter === 'OUT_OF_STOCK'
+                    ? 'bg-amber-600 text-white shadow-xs ring-2 ring-amber-300'
+                    : 'bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-900/40 hover:bg-amber-100 dark:hover:bg-amber-900/50'
+                }`}
+              >
+                ⚠ Out of Stock ({outOfStockCount})
+              </button>
             </div>
           </div>
 
@@ -380,17 +446,17 @@ export default function AdminDashboard() {
                   <tr>
                     <th className="py-3.5 px-4">Product</th>
                     <th className="py-3.5 px-3">Category</th>
+                    <th className="py-3.5 px-3">Location</th>
                     <th className="py-3.5 px-3">Price</th>
                     <th className="py-3.5 px-4 text-center">Stock Quantity</th>
-                    <th className="py-3.5 px-3">Floor</th>
-                    <th className="py-3.5 px-3">Aisle & Shelf</th>
                     <th className="py-3.5 px-3">Availability</th>
                     <th className="py-3.5 px-4 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-150 dark:divide-slate-700/40">
                   {filteredProducts.map((prod) => {
-                    const isAvailable = prod.stock > 0 && prod.inStock !== false;
+                    const currentStock = prod.stock !== undefined ? prod.stock : (prod.inStock ? 10 : 0);
+                    const isAvailable = currentStock > 0 && prod.inStock !== false;
 
                     return (
                       <tr 
@@ -415,54 +481,87 @@ export default function AdminDashboard() {
                           </span>
                         </td>
 
-                        {/* Price */}
-                        <td className="py-3 px-3 font-extrabold text-slate-900 dark:text-white">
-                          ₹{prod.price}
-                        </td>
-
-                        {/* Quick Stock Controls */}
-                        <td className="py-3 px-4">
-                          <div className="flex items-center justify-center gap-2">
-                            <button
-                              onClick={() => handleQuickStockChange(prod.id, -1)}
-                              className="w-6 h-6 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 flex items-center justify-center font-bold text-slate-700 dark:text-slate-200 transition-colors"
-                              title="Decrease stock"
-                            >
-                              <Minus className="h-3 w-3" />
-                            </button>
-                            <span className={`w-8 text-center font-black text-xs ${isAvailable ? 'text-slate-900 dark:text-white' : 'text-red-500 font-black'}`}>
-                              {prod.stock !== undefined ? prod.stock : (prod.inStock ? 10 : 0)}
-                            </span>
-                            <button
-                              onClick={() => handleQuickStockChange(prod.id, 1)}
-                              className="w-6 h-6 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 flex items-center justify-center font-bold text-slate-700 dark:text-slate-200 transition-colors"
-                              title="Increase stock"
-                            >
-                              <Plus className="h-3 w-3" />
-                            </button>
-                          </div>
-                        </td>
-
-                        {/* Floor */}
+                        {/* Location: Floor, Aisle, Shelf */}
                         <td className="py-3 px-3">
-                          <span className={`px-2.5 py-1 rounded-xl text-xxs font-extrabold ${
-                            prod.floor === 'Floor 1'
-                              ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
-                              : prod.floor === 'Floor 2'
-                              ? 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400'
-                              : 'bg-purple-500/10 text-purple-600 dark:text-purple-400'
-                          }`}>
-                            {prod.floor || 'Floor 1'}
-                          </span>
-                        </td>
-
-                        {/* Aisle & Shelf */}
-                        <td className="py-3 px-3">
-                          <div className="font-extrabold text-slate-800 dark:text-slate-200">
-                            {prod.aisle}
+                          <div className="font-bold text-slate-800 dark:text-slate-200">
+                            {prod.floor || 'Floor 1'} • {prod.aisle}
                           </div>
                           <div className="text-[10px] text-slate-400 font-medium">
                             {prod.shelf} (Node: {prod.nodeId})
+                          </div>
+                        </td>
+
+                        {/* Price (Requirement 5: Owner Can Edit Price) */}
+                        <td className="py-3 px-3 font-extrabold text-slate-900 dark:text-white">
+                          {editingPriceId === prod.id ? (
+                            <div className="flex items-center gap-1">
+                              <span className="text-xs font-bold text-slate-400">₹</span>
+                              <input
+                                type="number"
+                                min="0"
+                                value={inlinePriceValue}
+                                onChange={(e) => setInlinePriceValue(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') handleSaveInlinePrice(prod.id);
+                                  if (e.key === 'Escape') setEditingPriceId(null);
+                                }}
+                                autoFocus
+                                className="w-16 px-1.5 py-1 rounded-lg border border-blue-500 bg-white dark:bg-slate-900 text-xs font-extrabold text-slate-900 dark:text-white focus:outline-none"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => handleSaveInlinePrice(prod.id)}
+                                className="p-1 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 shadow-xs"
+                                title="Save price"
+                              >
+                                <Check className="h-3 w-3" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setEditingPriceId(null)}
+                                className="p-1 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300"
+                                title="Cancel"
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-1.5">
+                              <span>₹{prod.price}</span>
+                              <button
+                                type="button"
+                                onClick={() => handleStartEditPrice(prod)}
+                                className="px-1.5 py-0.5 rounded-md text-[10px] font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 transition-colors"
+                                title="Edit price"
+                              >
+                                Edit
+                              </button>
+                            </div>
+                          )}
+                        </td>
+
+                        {/* Quick Stock Controls (Requirement 3 & 4: Stock [ - ] 25 [ + ]) */}
+                        <td className="py-3 px-4">
+                          <div className="flex items-center justify-center gap-1.5">
+                            <span className="text-[10px] font-extrabold uppercase text-slate-400 mr-0.5">Stock</span>
+                            <button
+                              onClick={() => handleQuickStockChange(prod.id, -1)}
+                              disabled={currentStock <= 0}
+                              className="w-6 h-6 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 flex items-center justify-center font-black text-slate-700 dark:text-slate-200 disabled:opacity-30 active:scale-90 transition-all"
+                              title="Decrease stock"
+                            >
+                              <Minus className="h-3 w-3 stroke-[3]" />
+                            </button>
+                            <span className={`w-8 text-center font-black text-xs ${isAvailable ? 'text-slate-900 dark:text-white' : 'text-red-500 font-black'}`}>
+                              {currentStock}
+                            </span>
+                            <button
+                              onClick={() => handleQuickStockChange(prod.id, 1)}
+                              className="w-6 h-6 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 flex items-center justify-center font-black text-slate-700 dark:text-slate-200 active:scale-90 transition-all"
+                              title="Increase stock"
+                            >
+                              <Plus className="h-3 w-3 stroke-[3]" />
+                            </button>
                           </div>
                         </td>
 
@@ -498,8 +597,31 @@ export default function AdminDashboard() {
               </table>
 
               {filteredProducts.length === 0 && (
-                <div className="py-12 text-center text-slate-400 text-xs font-semibold">
-                  No products found matching the selected filters.
+                <div className="py-12 text-center space-y-3">
+                  {selectedStockFilter === 'OUT_OF_STOCK' ? (
+                    <>
+                      <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-950/40 text-emerald-600 flex items-center justify-center mx-auto text-xl font-bold">
+                        ✓
+                      </div>
+                      <div className="text-sm font-extrabold text-slate-800 dark:text-slate-200">
+                        🎉 All products are in stock!
+                      </div>
+                      <p className="text-xs text-slate-400 max-w-sm mx-auto">
+                        There are currently zero out-of-stock items in the supermarket.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedStockFilter('ALL')}
+                        className="px-4 py-2 rounded-xl bg-blue-600 text-white font-bold text-xs shadow-md hover:bg-blue-700 transition-all"
+                      >
+                        View All Products
+                      </button>
+                    </>
+                  ) : (
+                    <div className="text-slate-400 text-xs font-semibold">
+                      No products found matching the selected filters.
+                    </div>
+                  )}
                 </div>
               )}
             </div>

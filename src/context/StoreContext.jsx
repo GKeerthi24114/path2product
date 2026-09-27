@@ -52,7 +52,7 @@ export function StoreProvider({ children }) {
   const [assistantMessages, setAssistantMessages] = useState([
     {
       id: 1,
-      text: "Welcome to SmartMart Super Store! Search for a product above or click 'Enter Store' to begin navigation.",
+      text: "Welcome to Path2Product Supermarket! Search for a product above or click 'Enter Store' to begin navigation.",
       type: "info",
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     }
@@ -203,6 +203,20 @@ export function StoreProvider({ children }) {
     setRouteError(null);
     setMultiStopRoute(null);
     setCurrentStopIndex(0);
+  };
+
+  // Requirement 11: End Navigation clears customer cart ONLY after entire navigation/checkout flow finishes
+  const endNavigation = (completed = false) => {
+    const isAtOrHeadingToCheckout = destination && destination.startsWith('BILL');
+    const isAllStopsDone = multiStopRoute && multiStopRoute.stops && multiStopRoute.stops.every(s => s.isCollected);
+
+    if (completed || isAtOrHeadingToCheckout || isAllStopsDone) {
+      setShoppingList([]);
+      localStorage.removeItem('shoppingList');
+      addAssistantMessage("🎉 Shopping complete! Your shopping list has been cleared. Thank you for using Path2Product.", "success");
+    }
+
+    clearNavigation();
   };
 
   // Single Product Navigation (Exact product -> exact map node)
@@ -594,6 +608,7 @@ export function StoreProvider({ children }) {
       navigateToCheckout,
       optimizeShoppingRoute,
       clearNavigation,
+      endNavigation,
       activeMobileTab,
       setActiveMobileTab,
       activeStepIndex,
