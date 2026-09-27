@@ -207,45 +207,9 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 text-slate-900 dark:text-slate-100">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 text-slate-900 dark:text-slate-100">
       
-      {/* 1. SHOPKEEPER HERO HEADER */}
-      <div className="bg-gradient-to-r from-blue-700 via-indigo-700 to-slate-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 backdrop-blur-md text-xs font-bold text-blue-200 border border-white/20">
-              <Store className="h-3.5 w-3.5" />
-              <span>Path2Product</span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight leading-tight">
-              Shopkeeper Dashboard
-            </h1>
-            <p className="text-sm text-blue-100/90 max-w-2xl font-medium">
-              Manage product placement across Floor 1, Floor 2, and Floor 3. Adjust stock quantities and update prices in real-time. Customer search and navigation instantly reflect these exact supermarket locations.
-            </p>
-          </div>
-
-          {/* Quick Stats Pill */}
-          <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md p-3 rounded-2xl border border-white/15 self-start md:self-auto shrink-0">
-            <div className="text-center px-2">
-              <div className="text-xl font-extrabold text-white">{totalCount}</div>
-              <div className="text-[10px] text-blue-200 font-bold uppercase">Products</div>
-            </div>
-            <div className="h-8 w-px bg-white/20" />
-            <div className="text-center px-2">
-              <div className="text-xl font-extrabold text-emerald-300">{inStockCount}</div>
-              <div className="text-[10px] text-blue-200 font-bold uppercase">In Stock</div>
-            </div>
-            <div className="h-8 w-px bg-white/20" />
-            <div className="text-center px-2">
-              <div className="text-xl font-extrabold text-amber-300">{outOfStockCount}</div>
-              <div className="text-[10px] text-blue-200 font-bold uppercase">Out of Stock</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* 2. ADMIN NAVIGATION TABS */}
+      {/* ADMIN NAVIGATION TABS */}
       <div className="flex items-center gap-2 border-b border-gray-200 dark:border-slate-800 pb-3">
         <button
           onClick={() => setActiveTab('inventory')}

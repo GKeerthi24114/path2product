@@ -40,8 +40,11 @@ export default function Navbar() {
             </Link>
 
             {isOwnerPage && (
-              <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 text-xs font-bold border border-blue-200 dark:border-blue-800">
-                <Store className="h-3 w-3" /> Shopkeeper Dashboard
+              <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 text-xs font-bold border border-blue-200 dark:border-blue-800">
+                <Store className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                <span>Kmart</span>
+                <span className="text-blue-300 dark:text-blue-600">•</span>
+                <span>Shopkeeper Dashboard</span>
               </span>
             )}
           </div>
@@ -59,13 +62,13 @@ export default function Navbar() {
                       : 'text-gray-600 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400'
                   }`}
                 >
-                  <Store className="h-4 w-4" /> Shopkeeper Dashboard
+                  <Store className="h-4 w-4" /> Kmart Dashboard
                 </Link>
                 <Link 
                   to="/dashboard" 
                   className="flex items-center gap-1.5 px-3 py-2 rounded-lg font-medium text-sm text-gray-600 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 bg-slate-100 dark:bg-slate-800"
                 >
-                  <LayoutDashboard className="h-4 w-4 text-emerald-500" /> Switch to Customer Store
+                  <LayoutDashboard className="h-4 w-4 text-emerald-500" /> Switch to Kmart Store
                 </Link>
               </>
             ) : (
@@ -122,14 +125,14 @@ export default function Navbar() {
                 onClick={() => setIsOpen(false)}
                 className="flex items-center gap-2 px-3 py-2.5 rounded-xl font-medium text-base text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40"
               >
-                <Store className="h-5 w-5" /> Shopkeeper Dashboard
+                <Store className="h-5 w-5" /> Kmart Dashboard
               </Link>
               <Link
                 to="/dashboard"
                 onClick={() => setIsOpen(false)}
                 className="flex items-center gap-2 px-3 py-2.5 rounded-xl font-medium text-base text-gray-700 dark:text-slate-200 hover:bg-gray-100 dark:hover:bg-slate-800"
               >
-                <LayoutDashboard className="h-5 w-5 text-emerald-500" /> Switch to Customer Store
+                <LayoutDashboard className="h-5 w-5 text-emerald-500" /> Switch to Kmart Store
               </Link>
             </>
           ) : (

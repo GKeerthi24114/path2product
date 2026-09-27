@@ -52,7 +52,7 @@ export function StoreProvider({ children }) {
   const [assistantMessages, setAssistantMessages] = useState([
     {
       id: 1,
-      text: "Welcome to Path2Product Supermarket! Search for a product above or click 'Enter Store' to begin navigation.",
+      text: "Welcome to Kmart! Search for a product above or click 'Enter Store' to begin navigation.",
       type: "info",
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     }

@@ -1,4 +1,4 @@
-// Enhanced Dijkstra algorithm and human-understandable route optimizer for SmartStore
+// Enhanced Dijkstra algorithm and human-understandable route optimizer for Path2Product
 
 export const dijkstra = (adj, start, end) => {
   const distances = {};

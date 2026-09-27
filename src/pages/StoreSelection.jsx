@@ -62,7 +62,7 @@ export default function StoreSelection() {
     setDestination(null);
     setSelectedProduct(null);
     setCurrentPosition('ENT');
-    addAssistantMessage("Identified Path2Product Supermarket! Position set to Entrance (Ground Floor).", "success");
+    addAssistantMessage("Identified Kmart! Position set to Entrance (Ground Floor).", "success");
     setStep('identified');
   };
 
@@ -210,7 +210,7 @@ export default function StoreSelection() {
 
                 <div className="space-y-1">
                   <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
-                    Path2Product Supermarket
+                    Kmart
                   </h1>
                   <p className="text-xs sm:text-sm text-blue-100">
                     123 Market Street, Downtown
